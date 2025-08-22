@@ -1,0 +1,16 @@
+
+bin/
+obj/
+.vs/
+.vscode/
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+*.user
+*.suo
+.DS_Store
+Thumbs.db
+
+
+
