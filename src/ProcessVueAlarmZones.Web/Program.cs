@@ -8,12 +8,19 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 
-// Bind config to strongly-typed EemuaThresholds
-builder.Services.AddOptions<EemuaThresholds>()
-    .BindConfiguration(nameof(EemuaThresholds));
+/// Bind geometry from config
+builder.Services.AddOptions<EemuaGeometry>()
+    .BindConfiguration(nameof(EemuaGeometry))
+    .Validate(g => g.X1 < g.X2 && g.X2 < g.X3 && g.YTop > 0, "Invalid EemuaGeometry")
+    .ValidateOnStart();
 
 // Classifier
 builder.Services.AddSingleton<IEemuaZoneClassifier, EemuaZoneClassifier>();
+
+// (Optional) quick check
+var g = builder.Configuration.GetSection(nameof(EemuaGeometry)).Get<EemuaGeometry>();
+Console.WriteLine($"EemuaGeometry: X={g?.X1},{g?.X2},{g?.X3} YTop={g?.YTop}");
+
 
 var app = builder.Build();
 

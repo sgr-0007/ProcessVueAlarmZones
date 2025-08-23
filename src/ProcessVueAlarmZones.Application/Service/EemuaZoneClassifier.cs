@@ -1,70 +1,53 @@
+using Microsoft.Extensions.Options;
 using ProcessVueAlarmZones.Application.Config;
 using ProcessVueAlarmZones.Application.Interface;
 using ProcessVueAlarmZones.Domain.Domain;
-using Microsoft.Extensions.Options;
 
-namespace ProcessVueAlarmZones.Application.Service
-{
+namespace ProcessVueAlarmZones.Application.Service;
+
 /// <summary>
-/// EEMUA 191 classifier using a banded rule lookup.
-/// 
-/// 1) Bucket the inputs into bands:
-///    X (average alarm rate) → B0, B1, B2 based on cutoffs X1, X2, X3
-///    Y (% time outside target) → C0, C1, C2 based on cutoffs Y1, Y2, Y3
-/// 2) Then look up the (bandX, bandY) pair in a small lookup to get the Zone.
-/// 
-/// `xb`/`yb` are 0/1/2:
-/// - They are indexes into the lookup table (B0=0, B1=1, B2=2; C0=0, C1=1, C2=2).
-/// - The numeric thresholds (X1..X3, Y1..Y3) are used to calculate the band index.
-///       (0,0) Robust | (0,1) Robust | (0,2) Stable
-///       (1,0) Stable | (1,1) Stable | (1,2) Reactive
-///       (2,0) Reactive | (2,1) Reactive | (2,2) Reactive
-///
-/// Global rules (fast paths):
-/// - Overloaded if Y ≥ Y3 (e.g 50%) or X ≥ X3 (e.g 10)
-/// - Reactive for 2 < X < 10 when Y < Y3
-/// - At X == X2 intentionally keep it in band B1 (so (2, 20) == Stable).
+/// Geometry-accurate EEMUA 191 Rev 3 classifier:
+///  - 3 vertical cutoffs at x=1,2,10
+///  - 3 sloped boundaries: (0,25)-(1,10), (1,50)-(2,25), (2,50)-(10,25)
 /// </summary>
-    public sealed class EemuaZoneClassifier : IEemuaZoneClassifier
+public sealed class EemuaZoneClassifier : IEemuaZoneClassifier
+{
+    private readonly EemuaGeometry _g;
+    public EemuaZoneClassifier(IOptions<EemuaGeometry> options) => _g = options.Value;
+
+    public Zone Classify(double x, double y)
     {
-        private readonly EemuaThresholds _t;
+        if (x < 0) throw new ArgumentOutOfRangeException(nameof(x));
+        if (y < 0 || y > 100) throw new ArgumentOutOfRangeException(nameof(y));
 
-        public EemuaZoneClassifier(IOptions<EemuaThresholds> options)
+        // Far right: x > X3 → Overloaded
+        if (x > _g.X3) return Zone.Overloaded;
+
+        // Segment A: 0 ≤ x ≤ 1 (Robust wedge vs Stable)
+        if (x <= _g.X1)
         {
-            _t = options.Value;
+            var roof = EvalLine(_g.Robust_X0, _g.Robust_Y0, _g.Robust_X1, _g.Robust_Y1, x);
+            return y <= roof ? Zone.Robust : (y >= _g.YTop ? Zone.Stable : Zone.Stable);
         }
 
-        public Zone Classify(double avg, double pct)
+        // Segment B: 1 < x ≤ 2 (Stable/Reactive diagonal)
+        if (x <= _g.X2)
         {
-            if (avg < 0) throw new ArgumentOutOfRangeException(nameof(avg), "Average alarm rate cannot be negative.");
-            if (pct < 0 || pct > 100) throw new ArgumentOutOfRangeException(nameof(pct), "Percentage must be between 0 and 100.");
-
-            // Global cutoffs
-            if (pct >= _t.Y3) return Zone.Overloaded;
-            if (avg >= _t.X3) return Zone.Overloaded;
-            if (avg > _t.X2 && avg < _t.X3) return Zone.Reactive; // x==X2 handled below
-
-            // X band (x==X2 inclusive -> band1)
-            int xb = avg < _t.X1 ? 0 : (avg <= _t.X2 ? 1 : 2);
-            // Y band (y<Y3 guaranteed here)
-            int yb = pct < _t.Y1 ? 0 : (pct < _t.Y2 ? 1 : 2);
-
-            return (xb, yb) switch
-            {
-                (0, 0) => Zone.Robust,
-                (0, 1) => Zone.Robust,
-                (0, 2) => Zone.Stable,
-
-                (1, 0) => Zone.Stable,
-                (1, 1) => Zone.Stable,
-                (1, 2) => Zone.Reactive,
-
-                (2, 0) => Zone.Reactive,
-                (2, 1) => Zone.Reactive,
-                (2, 2) => Zone.Reactive,
-
-                _ => Zone.Reactive
-            };
+            var sr = EvalLine(_g.SR_X0, _g.SR_Y0, _g.SR_X1, _g.SR_Y1, x);
+            return y > sr ? Zone.Reactive : Zone.Stable;
         }
+
+        // Segment C: 2 < x ≤ 10 (Reactive/Overloaded diagonal)
+        {
+            var ro = EvalLine(_g.RO_X0, _g.RO_Y0, _g.RO_X1, _g.RO_Y1, x);
+            return y > ro ? Zone.Overloaded : Zone.Reactive;
+        }
+    }
+
+    private static double EvalLine(double x0, double y0, double x1, double y1, double x)
+    {
+        var m = (y1 - y0) / (x1 - x0);
+        var b = y0 - m * x0;
+        return m * x + b;
     }
 }
