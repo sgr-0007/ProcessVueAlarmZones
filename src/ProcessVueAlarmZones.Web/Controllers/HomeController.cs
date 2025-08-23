@@ -1,31 +1,23 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using ProcessVueAlarmZones.Application.Interface;
 using ProcessVueAlarmZones.Web.Models;
 
 namespace ProcessVueAlarmZones.Web.Controllers;
 
-public class HomeController : Controller
+public class HomeController(IEemuaZoneClassifier classifier) : Controller
 {
-    private readonly ILogger<HomeController> _logger;
+    private readonly IEemuaZoneClassifier _classifier = classifier;
 
-    public HomeController(ILogger<HomeController> logger)
-    {
-        _logger = logger;
-    }
+    [HttpGet]
+    public IActionResult Index() => View(new IndexViewModel());
 
-    public IActionResult Index()
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult Index(IndexViewModel vm)
     {
-        return View();
-    }
-
-    public IActionResult Privacy()
-    {
-        return View();
-    }
-
-    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    public IActionResult Error()
-    {
-        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        if (!ModelState.IsValid) return View(vm);
+        vm.Result = _classifier.Classify(vm.Input.AverageAlarmRate, vm.Input.PercentOutsideTarget);
+        return View(vm);
     }
 }
