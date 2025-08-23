@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using ProcessVueAlarmZones.Domain;
+using ProcessVueAlarmZones.Domain.Domain;
 
 namespace ProcessVueAlarmZones.Application.Interface
 {

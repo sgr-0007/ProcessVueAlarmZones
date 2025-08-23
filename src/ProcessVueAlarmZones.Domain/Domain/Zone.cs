@@ -1,4 +1,4 @@
-namespace ProcessVueAlarmZones.Domain;
+namespace ProcessVueAlarmZones.Domain.Domain;
 
 public enum Zone
 {

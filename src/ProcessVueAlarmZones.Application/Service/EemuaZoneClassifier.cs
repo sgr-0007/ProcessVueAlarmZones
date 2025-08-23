@@ -1,6 +1,6 @@
 using ProcessVueAlarmZones.Application.Config;
 using ProcessVueAlarmZones.Application.Interface;
-using ProcessVueAlarmZones.Domain;
+using ProcessVueAlarmZones.Domain.Domain;
 using Microsoft.Extensions.Options;
 
 namespace ProcessVueAlarmZones.Application.Service
