@@ -1,7 +1,19 @@
+using ProcessVueAlarmZones.Application.Config;
+using ProcessVueAlarmZones.Application.Interface;
+using ProcessVueAlarmZones.Application.Service;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+
+// Bind config to strongly-typed EemuaThresholds
+builder.Services.AddOptions<EemuaThresholds>()
+    .BindConfiguration(nameof(EemuaThresholds));
+
+// Classifier
+builder.Services.AddSingleton<IEemuaZoneClassifier, EemuaZoneClassifier>();
 
 var app = builder.Build();
 
