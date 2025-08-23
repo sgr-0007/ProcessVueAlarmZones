@@ -1,8 +1,36 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model ProcessVueAlarmZones.Web.Models.IndexViewModel
+@{
+    ViewData["Title"] = "EEMUA 191 Zone Classifier";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<h1 class="mb-3">@ViewData["Title"]</h1>
+<p class="text-muted">Enter X (average alarm rate) and Y (% time outside target). We'll return the zone.</p>
+
+<form asp-action="Index" method="post" novalidate>
+    @Html.AntiForgeryToken()
+
+    <div class="mb-3">
+        <label asp-for="Input.AverageAlarmRate" class="form-label"></label>
+        <input asp-for="Input.AverageAlarmRate" class="form-control" type="number" step="any" />
+        <span asp-validation-for="Input.AverageAlarmRate" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Input.PercentOutsideTarget" class="form-label"></label>
+        <input asp-for="Input.PercentOutsideTarget" class="form-control" type="number" step="any" />
+        <span asp-validation-for="Input.PercentOutsideTarget" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Classify</button>
+</form>
+
+@if (Model.Result is not null)
+{
+    <div class="alert alert-info mt-4">
+        <strong>Zone:</strong> @Model.Result
+    </div>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
