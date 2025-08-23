@@ -17,7 +17,19 @@ public class HomeController(IEemuaZoneClassifier classifier) : Controller
     public IActionResult Index(IndexViewModel vm)
     {
         if (!ModelState.IsValid) return View(vm);
-        vm.Result = _classifier.Classify(vm.Input.AverageAlarmRate, vm.Input.PercentOutsideTarget);
+
+        try
+        {
+            vm.Result = _classifier.Classify(vm.Input.AverageAlarmRate, vm.Input.PercentOutsideTarget);
+        }
+        catch (ArgumentOutOfRangeException ex)
+        {
+            ModelState.AddModelError(string.Empty, ex.Message);
+
+            // Clear previous result so it doesn't "stick"
+            vm.Result = null;
+        }
+
         return View(vm);
     }
 }

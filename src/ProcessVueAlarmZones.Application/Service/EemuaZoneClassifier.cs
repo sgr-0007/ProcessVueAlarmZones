@@ -10,14 +10,13 @@ namespace ProcessVueAlarmZones.Application.Service;
 ///  - 3 vertical cutoffs at x=1,2,10
 ///  - 3 sloped boundaries: (0,25)-(1,10), (1,50)-(2,25), (2,50)-(10,25)
 /// </summary>
-public sealed class EemuaZoneClassifier : IEemuaZoneClassifier
+public sealed class EemuaZoneClassifier(IOptions<EemuaGeometry> options) : IEemuaZoneClassifier
 {
-    private readonly EemuaGeometry _g;
-    public EemuaZoneClassifier(IOptions<EemuaGeometry> options) => _g = options.Value;
+    private readonly EemuaGeometry _g = options.Value;
 
     public Zone Classify(double x, double y)
     {
-        if (x < 0) throw new ArgumentOutOfRangeException(nameof(x));
+        ArgumentOutOfRangeException.ThrowIfNegative(x);
         if (y < 0 || y > 100) throw new ArgumentOutOfRangeException(nameof(y));
 
         // Far right: x > X3 → Overloaded
@@ -27,7 +26,8 @@ public sealed class EemuaZoneClassifier : IEemuaZoneClassifier
         if (x <= _g.X1)
         {
             var roof = EvalLine(_g.Robust_X0, _g.Robust_Y0, _g.Robust_X1, _g.Robust_Y1, x);
-            return y <= roof ? Zone.Robust : (y >= _g.YTop ? Zone.Stable : Zone.Stable);
+            return y <= roof ? Zone.Robust : Zone.Stable;
+
         }
 
         // Segment B: 1 < x ≤ 2 (Stable/Reactive diagonal)
