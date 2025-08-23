@@ -22,14 +22,30 @@
     <button type="submit" class="btn btn-primary">Classify</button>
 </form>
 
-@if (Model.Result is not null)
+@if (ViewData.ModelState.IsValid && Model.Result is not null)
 {
     var zoneClass = Model.Result.ToString()?.ToLower();
-    <div class="zone-result @zoneClass mt-4 p-3 rounded">
+    <div id="zoneBox" class="zone-result @zoneClass mt-4 p-3 rounded">
         <strong>Zone:</strong> @Model.Result
     </div>
 }
 
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}
+<script>
+    (function () {
+        function toggleZone() {
+            var box = document.getElementById('zoneBox');
+            if (!box) return;
+            var hasErrors = document.querySelectorAll('.input-validation-error').length > 0;
+            if (hasErrors || box.innerText.trim() === "") {
+                box.style.display = 'none';
+            } else {
+                box.style.display = '';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', toggleZone);
+        document.addEventListener('input', toggleZone, true);
+        document.addEventListener('change', toggleZone, true);
+        document.addEventListener('blur', toggleZone, true);
+    })();
+</script>

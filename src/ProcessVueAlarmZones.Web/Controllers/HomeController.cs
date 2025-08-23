@@ -16,7 +16,11 @@ public class HomeController(IEemuaZoneClassifier classifier) : Controller
     [ValidateAntiForgeryToken]
     public IActionResult Index(IndexViewModel vm)
     {
-        if (!ModelState.IsValid) return View(vm);
+        if (!ModelState.IsValid)
+        {
+            vm.Result = null;
+            return View(vm);
+        }
 
         try
         {
