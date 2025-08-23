@@ -20,3 +20,30 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+/* Generic result box */
+.zone-result {
+  color: #fff;
+  font-weight: 600;
+  border-radius: .5rem;
+  padding: 1rem;
+}
+
+/* Zone-specific backgrounds */
+.zone-result.robust {
+  background: #006400;
+}
+
+.zone-result.stable {
+  background: #90ee90;
+  color: #000; 
+}
+
+.zone-result.reactive {
+  background: #f8fb60;
+  color: #000;
+}
+
+.zone-result.overloaded {
+  background: #dc3545;
+}

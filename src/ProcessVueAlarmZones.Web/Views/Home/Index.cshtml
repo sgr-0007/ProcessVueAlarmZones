@@ -24,7 +24,8 @@
 
 @if (Model.Result is not null)
 {
-    <div class="alert alert-info mt-4">
+    var zoneClass = Model.Result.ToString()?.ToLower();
+    <div class="zone-result @zoneClass mt-4 p-3 rounded">
         <strong>Zone:</strong> @Model.Result
     </div>
 }
