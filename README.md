@@ -2,7 +2,7 @@
 
 ASP.NET Core 8 MVC application that classifies plant alarm performance zones using the **EEMUA 191 Rev 3 chart**.
 
----
+<img src="asset/chartemua.png" alt="chart" width="800" height="600">
 
 ## Features
 
